@@ -3,7 +3,7 @@
 wykonaj(a, s) -> (dane, karta wyniku). Wykonanie następuje WYŁĄCZNIE po potwierdzeniu Face ID w aplikacji.
 Gdy akcji nie da się wykonać (np. sprawa wymaga wizyty albo termin jeszcze nie biegnie), podglad zgłasza
 ValueError z wyjaśnieniem dla modelu; agent przekazuje je jako błąd narzędzia i nie pokazuje karty."""
-import datetime, random, re
+import datetime, hashlib, html, random, re
 from dane import DOKUMENTY, OSOBA, POJAZD, NALEZNOSCI, DRUGA_STRONA, DZIS, pl, d, zl, KURSY, rodz, imie_nazwisko, norm_rej, sylw
 from persony import P
 
@@ -350,10 +350,20 @@ def podglad(a, s):
     return dict(icon='doc', title='Zaświadczenie o niekaralności', source='Krajowy Rejestr Karny',
                 rows=[['Osoba', OSOBA['imie'] + ' ' + OSOBA['nazwisko']], ['PESEL', pesel_maska()], ['Cel', a.get('cel') or 'nie podano'], ['Opłata', '0 zł']],
                 note='Zaświadczenie potwierdza dane z Krajowego Rejestru Karnego na dzień wydania.', label='Zamów bezpłatnie')
+def _zaswiadczenie(a):
+    cel = a.get('cel') or 'nie podano'
+    nr_sprawy = 'KRK/2026/%06d' % (int(hashlib.md5((OSOBA['pesel'] + cel).encode()).hexdigest(), 16) % 999999 + 1)
+    tresc = ['ZAŚWIADCZENIE O NIEKARALNOŚCI (prototyp, fikcyjne dane)', 'Krajowy Rejestr Karny', 'Nr sprawy: ' + nr_sprawy,
+             'Osoba: %s %s, PESEL %s' % (OSOBA['imie'], OSOBA['nazwisko'], pesel_maska()),
+             'Data urodzenia: %s, miejsce: %s' % (OSOBA['data_urodzenia'], OSOBA['miejsce_urodzenia']),
+             'Cel: ' + cel, 'Data wydania: ' + pl(DZIS),
+             'Z Krajowego Rejestru Karnego wynika, że powyższa osoba nie jest wpisana do rejestru skazanych na dzień wydania zaświadczenia.']
+    return cel, '<br>'.join(html.escape(x) for x in tresc)
 @akcja('zamow_zaswiadczenie_o_niekaralnosci')
 def wykonaj(a, s):
-    cel = a.get('cel') or 'nie podano'
-    return dict(gotowe=True, plik='zaswiadczenie_o_niekaralnosci.pdf', cel=cel), dict(icon='check', tone='ok', title='Zaświadczenie gotowe', source='Krajowy Rejestr Karny',
+    cel, body = _zaswiadczenie(a)
+    s['pliki_nowe'] = s.get('pliki_nowe', []) + [dict(nazwa='zaswiadczenie_o_niekaralnosci.pdf', opis='zaświadczenie o niekaralności, KRK, cel: ' + cel, tresc=body)]
+    return dict(gotowe=True, plik='zaswiadczenie_o_niekaralnosci.pdf', cel=cel), dict(icon='check', tone='ok', title='Zaświadczenie gotowe', source='Krajowy Rejestr Karny', body=body,
         rows=[['Plik', 'zaswiadczenie_o_niekaralnosci.pdf'], ['Cel', cel], ['Dostęp', 'w Plikach aplikacji']])
 
 # --- finanse

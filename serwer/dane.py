@@ -157,7 +157,7 @@ def r_skrzynka(a, s):
     return dict(wiadomosci=msgs), card
 
 def r_moje_pliki(a, s):
-    q = (a.get('szukaj') or '').lower(); pliki = P()['pliki']
+    q = (a.get('szukaj') or '').lower(); pliki = P()['pliki'] + (s or {}).get('pliki_nowe', [])
     f = [x for x in pliki if not q or any(w in (x['nazwa'] + x['opis']).lower() for w in q.split())] or pliki
     return dict(pliki=f), dict(icon='doc', title='Pliki', source='Twoje pliki w mObywatelu', rows=[[x['nazwa'], x['opis']] for x in f])
 

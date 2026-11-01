@@ -176,6 +176,18 @@ const S={
  },
  async dowodWaz(){await say('Twój dowód jest ważny do <b>20.05.2031</b>. To e-dowód z warstwą elektroniczną. Na nowy wniosek masz jeszcze czas, przypomnę Ci o nim wcześniej.');chips([{label:'Przypomnij w marcu 2031',go:()=>result({title:'Przypomnienie ustawione',rows:[['Kiedy','20.03.2031, 9:00']]})},{label:'Nie trzeba'}])},
  async kdr(){await say('Z Kartą Dużej Rodziny masz ulgę 37% na pociągi (49% na bilet miesięczny), bezpłatny wstęp do parków narodowych i zniżki u partnerów. Pokazać partnerów w Twojej okolicy?');chips([{label:'Pokaż w okolicy',go:()=>info({icon:'doc',title:'Partnerzy KDR w pobliżu',source:'Wyszukiwarka partnerów KDR (empatia.gov.pl)',rows:[['Muzeum w okolicy','zniżka na bilet rodzinny'],['Basen miejski','zniżka na wejście'],['Orlen','8 gr/l, paliwa premium 10 gr/l']]})}])},
+ async zaswiadczenie(){
+  await say('Zaświadczenie o niekaralności wydam z Krajowego Rejestru Karnego. Jest bezpłatne i trafi do Plików w aplikacji. Do czego jest potrzebne?');
+  chips([{label:'Praca',go:()=>S.zaswiadczenie2('praca')},{label:'Adopcja',go:()=>S.zaswiadczenie2('adopcja')},{label:'Wiza',go:()=>S.zaswiadczenie2('wiza')}]);
+ },
+ async zaswiadczenie2(cel){
+  await say('Sprawdź dane i potwierdź. Zamówienie idzie do rejestru od razu.');
+  await confirmCard({icon:'doc',title:'Zaświadczenie o niekaralności',source:'Krajowy Rejestr Karny',rows:[['Osoba','Marta Kowalska'],['PESEL','910714•••65'],['Cel',cel],['Opłata','0 zł']],label:'Zamów bezpłatnie',then:async()=>{
+   const nr='KRK/2026/'+String(100000+cel.length*7919%899999).slice(-6),data=new Date().toLocaleDateString('pl-PL');
+   await result({title:'Zaświadczenie gotowe',source:'Krajowy Rejestr Karny',body:['ZAŚWIADCZENIE O NIEKARALNOŚCI (prototyp, fikcyjne dane)','Krajowy Rejestr Karny','Nr sprawy: '+nr,'Osoba: Marta Kowalska, PESEL 910714•••65','Data urodzenia: 14.07.1991, miejsce: Warszawa','Cel: '+cel,'Data wydania: '+data,'Z Krajowego Rejestru Karnego wynika, że powyższa osoba nie jest wpisana do rejestru skazanych na dzień wydania zaświadczenia.'].join('<br>'),rows:[['Plik','zaswiadczenie_o_niekaralnosci.pdf'],['Cel',cel],['Dostęp','w Plikach aplikacji']]});
+   await say('Gotowe. Zaświadczenie jest w Plikach aplikacji.');
+  }});
+ },
  async fallback(){await say('Tego w tej wersji jeszcze nie załatwię. Najbliżej pasuje:');chips([{label:'Co mam do załatwienia?',go:S.todo},{label:'Zgubiłam portfel',go:S.portfel},{label:'Kupuję używane auto',go:S.auto}])}
 };
 
@@ -199,6 +211,7 @@ function route(t){
  if(/skrzynk|pismo|list z urzedu|e-doreczen/.test(n))return S.letter();
  if(/\boc\b|ubezpiecz/.test(n))return S.oc();
  if(/podatek|zaplac|oplac|oplat/.test(n))return S.pay();
+ if(/niekaralnosc|karalnosc|karny|\bkrk\b/.test(n))return S.zaswiadczenie();
  if(/duzej rodziny|\bkdr\b/.test(n))return S.kdr();
  if(/do zalatwienia|co mam|zaleg|przypomn|sprawy|powiadom/.test(n))return S.todo();
  return S.fallback();
